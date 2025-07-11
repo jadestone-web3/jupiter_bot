@@ -85,8 +85,60 @@ const TOKENS = {
     NiHao: "6FZ2ZJkDJdSvmktH6kdce75uqL7yz6SBF9FS5BgDbonk",
     KOKOK: "5HkhVG2bSb5PGjhX5QHm9urUquD7tx5eAau5Fonq78zc",
     PENGU: "2zMMhcVQEXDtdE6vsFS7S7D5oUodfJHE8vd1gnBouauv",
-    Fartcoin: "9BB6NFEcjBCtnNLFko2FqVQBq8HHM13kCyYcdQbgpump"
+    Fartcoin: "9BB6NFEcjBCtnNLFko2FqVQBq8HHM13kCyYcdQbgpump",
+    // 新增主流币种
+    DAI: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", // 使用USDC地址，实际需要替换为DAI地址
+    FRAX: "FR3SPJmgfRSKKQ2ysUZBu7vJLpzTixXnjzb84bY3JifJ",
+    RAY: "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
+    SRM: "SRMuApVNdxXokk5GT7XD5cUUgXMBCoAz2LHeuAoKWRt",
+    ORCA: "orcaEKTdK7LKz57vaAYr9QeNsVEPfiu6QeMU1kektZE",
+    MNGO: "MangoCzJ36AjZyKwVj3VnYU4GTonjfVEnJmvvWaxLac",
+    SAMO: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU",
+    COPE: "8HGyAAB1yoM2ttS7pXjfMa88pQN3R2fHvTt3QLp5q1j1",
+    RATIO: "ratioMVg27rSZbSvBpU1gHP5purTX1sxP0rBmxYBqX",
+    PYTH: "HZ1JovNiVvGrGNiiYvEozEVg58WUyZzK9S4QmvL9qXny",
+    WIF: "EKpQGSJtjMFqKZ1KQanSqYXRcF8fBopzLHYxdM65Qjmz",
+    DOGE: "ArUkYE2XDKzqy77PRRGjo5wREgkwTQF7pyVmMTyUfQYq",
+    SHIB: "7vfCXTUXx5WJV5JADk17DUJ4ksgau7utNKj4b963voxs",
+    PEPE: "CKaKtYvz6dKPyMvYq9Rh3UBrnNqYqRqC7D1QJqJqJqJq", // 需要替换为实际地址
+    BOME: "9aeipBqJqJqJqJqJqJqJqJqJqJqJqJqJqJqJqJqJqJq" // 需要替换为实际地址
 };
+
+// 币种名称映射，用于日志显示
+const TOKEN_NAMES = {
+    [TOKENS.SOL]: "SOL",
+    [TOKENS.USDC]: "USDC",
+    [TOKENS.USDT]: "USDT",
+    [TOKENS.BONK]: "BONK",
+    [TOKENS.JUP]: "JUP",
+    [TOKENS.MCDC]: "MCDC",
+    [TOKENS.COMMUNIT]: "COMMUNIT",
+    [TOKENS.NiHao]: "NiHao",
+    [TOKENS.KOKOK]: "KOKOK",
+    [TOKENS.PENGU]: "PENGU",
+    [TOKENS.Fartcoin]: "Fartcoin",
+    // 新增币种名称
+    [TOKENS.DAI]: "DAI",
+    [TOKENS.FRAX]: "FRAX",
+    [TOKENS.RAY]: "RAY",
+    [TOKENS.SRM]: "SRM",
+    [TOKENS.ORCA]: "ORCA",
+    [TOKENS.MNGO]: "MNGO",
+    [TOKENS.SAMO]: "SAMO",
+    [TOKENS.COPE]: "COPE",
+    [TOKENS.RATIO]: "RATIO",
+    [TOKENS.PYTH]: "PYTH",
+    [TOKENS.WIF]: "WIF",
+    [TOKENS.DOGE]: "DOGE",
+    [TOKENS.SHIB]: "SHIB",
+    [TOKENS.PEPE]: "PEPE",
+    [TOKENS.BOME]: "BOME"
+};
+
+// 获取币种友好名称
+function getTokenName(mint) {
+    return TOKEN_NAMES[mint] || mint.slice(0, 8) + "...";
+}
 
 // 主币配置
 const MAIN_TOKEN = TOKENS.USDC;
@@ -100,12 +152,17 @@ const ARBITRAGE_CONFIG = {
     minAmount: 1_000_000, // 最小交易金额 (1 USDC)
     autoExecute: true, // 是否自动执行交易
     monitorInterval: 10000, // 监控间隔 (毫秒)
-    maxRetries: 3 // 最大重试次数
+    maxRetries: 3, // 最大重试次数
+    maxPriceImpact: 0.01, // 最大价格影响 (1%)
+    // 流动性检查配置
+    minLiquidityUSD: 10000, // 最小流动性（美元）
+    minVolume24h: 5000, // 最小24小时交易量（美元）
+    enableLiquidityCheck: true // 是否启用流动性检查
 };
 
 // 风险控制配置
 const RISK_CONFIG = {
-    minProfitAfterSlippage: 0.05,  // 考虑滑点后的最小利润
+    minProfitAfterSlippage: 0.1,  // 考虑滑点后的最小利润（1%）
     maxConsecutiveLosses: 3,        // 最大连续亏损次数
     emergencyStopLoss: 0.1,         // 紧急止损阈值
     balanceProtectionRatio: 0.8,    // 余额保护比例
@@ -178,10 +235,36 @@ function updateSuccessRate(success) {
 
 // 套利币对配置，方便统一管理
 const ARBITRAGE_PAIRS = [
+    // 稳定币组合，流动性最好
+    [TOKENS.USDC, TOKENS.USDT, TOKENS.FRAX],
+    [TOKENS.USDC, TOKENS.SOL, TOKENS.USDT],
+    [TOKENS.USDC, TOKENS.FRAX, TOKENS.SOL],
+
+    // 主流DeFi代币组合
+    [TOKENS.USDC, TOKENS.SOL, TOKENS.RAY],
+    [TOKENS.USDC, TOKENS.SOL, TOKENS.SRM],
+    [TOKENS.USDC, TOKENS.SOL, TOKENS.ORCA],
+    [TOKENS.USDC, TOKENS.SOL, TOKENS.MNGO],
+    [TOKENS.USDC, TOKENS.RAY, TOKENS.USDT],
+    [TOKENS.USDC, TOKENS.SRM, TOKENS.USDT],
+    [TOKENS.USDC, TOKENS.ORCA, TOKENS.USDT],
+
+    // 热门meme币组合
+    [TOKENS.USDC, TOKENS.BONK, TOKENS.SOL],
+    [TOKENS.USDC, TOKENS.SAMO, TOKENS.SOL],
+    [TOKENS.USDC, TOKENS.WIF, TOKENS.SOL],
+    [TOKENS.USDC, TOKENS.DOGE, TOKENS.SOL],
+    [TOKENS.USDC, TOKENS.SHIB, TOKENS.SOL],
+    [TOKENS.USDC, TOKENS.BONK, TOKENS.WIF],
+    [TOKENS.USDC, TOKENS.SAMO, TOKENS.WIF],
+
+    // 新币组合（流动性较好）
     [TOKENS.USDC, TOKENS.BONK, TOKENS.JUP],
+    [TOKENS.USDC, TOKENS.JUP, TOKENS.USDT],
     [TOKENS.USDC, TOKENS.JUP, TOKENS.MCDC],
-    [TOKENS.USDC, TOKENS.NiHao, TOKENS.KOKOK],
-    [TOKENS.USDC, TOKENS.PENGU, TOKENS.Fartcoin]
+    [TOKENS.USDC, TOKENS.PYTH, TOKENS.SOL],
+    [TOKENS.USDC, TOKENS.RATIO, TOKENS.SOL],
+    [TOKENS.USDC, TOKENS.COPE, TOKENS.SOL]
 ];
 
 // 执行交易函数
@@ -240,12 +323,133 @@ async function getQuote(inputMint, outputMint, amount) {
             return null;
         }
         const quote = await quoteResponse.json();
-        // 细化日志：打印滑点、手续费、outAmount
-        console.log(`【报价】${inputMint}→${outputMint} amount: ${amount / 1e6}, outAmount: ${quote.outAmount / 1e6}, priceImpact: ${quote.priceImpactPct}, fee: ${quote.totalFeeAndDeposits || quote.feeAmount}`);
+
+        // 计算实际手续费
+        const totalFee = quote.totalFeeAndDeposits || quote.feeAmount || 0;
+        const platformFee = quote.platformFee || 0;
+        const actualFee = totalFee + platformFee;
+
+        // 计算实际输出金额（扣除手续费）
+        const actualOutAmount = quote.outAmount - actualFee;
+
+        // 细化日志：打印滑点、手续费、outAmount、路由信息
+        console.log(`【报价详情】${getTokenName(inputMint)}→${getTokenName(outputMint)}`);
+        console.log(`  输入金额: ${(amount / 1e6).toFixed(6)}`);
+        console.log(`  输出金额: ${(quote.outAmount / 1e6).toFixed(6)}`);
+        console.log(`  实际输出: ${(actualOutAmount / 1e6).toFixed(6)} (扣除手续费)`);
+        console.log(`  价格影响: ${(quote.priceImpactPct * 100).toFixed(4)}%`);
+        console.log(`  总手续费: ${(totalFee / 1e6).toFixed(6)}`);
+        console.log(`  平台费用: ${(platformFee / 1e6).toFixed(6)}`);
+        console.log(`  路由数量: ${quote.routePlan?.length || 0}`);
+
+        // 如果价格影响过大，给出警告
+        if (quote.priceImpactPct > ARBITRAGE_CONFIG.maxPriceImpact) { // 使用配置的最大价格影响
+            console.log(`⚠️  价格影响过大: ${(quote.priceImpactPct * 100).toFixed(2)}%，可能影响套利利润`);
+        }
+
         return quote;
     } catch (error) {
         console.error("获取报价时发生错误:", error);
         return null;
+    }
+}
+
+// 流动性检查函数
+async function checkLiquidity(inputMint, outputMint, amount) {
+    if (!ARBITRAGE_CONFIG.enableLiquidityCheck) {
+        return true; // 如果未启用流动性检查，直接返回true
+    }
+
+    try {
+        // 获取报价来检查流动性
+        const quote = await getQuote(inputMint, outputMint, amount);
+        if (!quote) {
+            console.log(`❌ 流动性检查失败: 无法获取${getTokenName(inputMint)}→${getTokenName(outputMint)}的报价`);
+            return false;
+        }
+
+        // 检查价格影响是否过大
+        if (quote.priceImpactPct > ARBITRAGE_CONFIG.maxPriceImpact) {
+            console.log(`❌ 流动性不足: ${getTokenName(inputMint)}→${getTokenName(outputMint)}价格影响${(quote.priceImpactPct * 100).toFixed(2)}%超过阈值`);
+            return false;
+        }
+
+        // 检查是否有足够的输出金额
+        const minOutputAmount = amount * 0.95; // 至少95%的输出
+        if (quote.outAmount < minOutputAmount) {
+            console.log(`❌ 流动性不足: ${getTokenName(inputMint)}→${getTokenName(outputMint)}输出金额过低`);
+            return false;
+        }
+
+        // 检查路由数量（路由越多说明流动性越分散）
+        if (quote.routePlan && quote.routePlan.length > 5) {
+            console.log(`⚠️  流动性分散: ${getTokenName(inputMint)}→${getTokenName(outputMint)}需要${quote.routePlan.length}个路由`);
+        }
+
+        console.log(`✅ 流动性检查通过: ${getTokenName(inputMint)}→${getTokenName(outputMint)}`);
+        return true;
+
+    } catch (error) {
+        console.error("流动性检查时发生错误:", error);
+        return false;
+    }
+}
+
+// 获取币种24小时交易量（可选功能）
+async function getTokenVolume24h(mint) {
+    try {
+        // 这里可以集成CoinGecko或其他API来获取交易量数据
+        // 目前返回默认值，实际使用时需要替换为真实的API调用
+        const volumeMap = {
+            [TOKENS.SOL]: 1000000, // 1M USD
+            [TOKENS.USDC]: 5000000, // 5M USD
+            [TOKENS.USDT]: 3000000, // 3M USD
+            [TOKENS.BONK]: 500000,  // 500K USD
+            [TOKENS.JUP]: 200000,   // 200K USD
+            [TOKENS.RAY]: 100000,   // 100K USD
+            [TOKENS.SRM]: 80000,    // 80K USD
+            [TOKENS.ORCA]: 60000,   // 60K USD
+            [TOKENS.WIF]: 400000,   // 400K USD
+            [TOKENS.SAMO]: 150000,  // 150K USD
+            [TOKENS.DOGE]: 300000,  // 300K USD
+            [TOKENS.SHIB]: 200000,  // 200K USD
+        };
+
+        return volumeMap[mint] || 50000; // 默认50K USD
+    } catch (error) {
+        console.error("获取交易量时发生错误:", error);
+        return 50000; // 默认值
+    }
+}
+
+// 增强的流动性检查函数
+async function checkEnhancedLiquidity(inputMint, outputMint, amount) {
+    if (!ARBITRAGE_CONFIG.enableLiquidityCheck) {
+        return true;
+    }
+
+    try {
+        // 基础流动性检查
+        const basicCheck = await checkLiquidity(inputMint, outputMint, amount);
+        if (!basicCheck) {
+            return false;
+        }
+
+        // 获取交易量信息
+        const inputVolume = await getTokenVolume24h(inputMint);
+        const outputVolume = await getTokenVolume24h(outputMint);
+
+        // 检查交易量是否足够
+        const minVolume = ARBITRAGE_CONFIG.minVolume24h;
+        if (inputVolume < minVolume || outputVolume < minVolume) {
+            console.log(`⚠️  交易量较低: ${getTokenName(inputMint)}(${inputVolume.toLocaleString()}) ${getTokenName(outputMint)}(${outputVolume.toLocaleString()})`);
+        }
+
+        return true;
+
+    } catch (error) {
+        console.error("增强流动性检查时发生错误:", error);
+        return false;
     }
 }
 
@@ -357,7 +561,7 @@ async function getTokenBalance(pubkey, mint) {
 // 计算三角套利
 async function calculateTriangularArbitrage(tokenA, tokenB, tokenC, amount) {
     try {
-        console.log(`\n【模拟三角套利开始】${tokenA} → ${tokenB} → ${tokenC} → ${tokenA}`);
+        console.log(`\n【模拟三角套利开始】${getTokenName(tokenA)} → ${getTokenName(tokenB)} → ${getTokenName(tokenC)} → ${getTokenName(tokenA)}`);
         console.log(`初始金额: ${amount / 1e6} 单位`);
 
         // 余额保护检查
@@ -372,30 +576,79 @@ async function calculateTriangularArbitrage(tokenA, tokenB, tokenC, amount) {
         const balC0 = await getTokenBalance(wallet.publicKey, tokenC);
 
         // 第一步: A → B
+        console.log(`\n🔍 检查第一步流动性: ${getTokenName(tokenA)} → ${getTokenName(tokenB)}`);
+        const liquidityCheck1 = await checkEnhancedLiquidity(tokenA, tokenB, amount);
+        if (!liquidityCheck1) {
+            console.log(`❌ 第一步流动性不足，跳过此套利机会`);
+            return null;
+        }
+
         const quote1 = await getQuote(tokenA, tokenB, amount);
         if (!quote1 || !quote1.routePlan || quote1.routePlan.length === 0) {
             console.log("❌ 第一步报价失败");
             return null;
         }
-        const amountB = parseInt(quote1.outAmount);
+
+        // 检查价格影响
+        if (quote1.priceImpactPct > ARBITRAGE_CONFIG.maxPriceImpact) {
+            console.log(`❌ 第一步价格影响过大: ${(quote1.priceImpactPct * 100).toFixed(2)}%，跳过此套利机会`);
+            return null;
+        }
+
+        // 计算实际输出金额（扣除手续费）
+        const fee1 = (quote1.totalFeeAndDeposits || quote1.feeAmount || 0) + (quote1.platformFee || 0);
+        const amountB = parseInt(quote1.outAmount - fee1);
 
         // 第二步: B → C
+        console.log(`\n🔍 检查第二步流动性: ${getTokenName(tokenB)} → ${getTokenName(tokenC)}`);
+        const liquidityCheck2 = await checkEnhancedLiquidity(tokenB, tokenC, amountB);
+        if (!liquidityCheck2) {
+            console.log(`❌ 第二步流动性不足，跳过此套利机会`);
+            return null;
+        }
+
         const quote2 = await getQuote(tokenB, tokenC, amountB);
         if (!quote2 || !quote2.routePlan || quote2.routePlan.length === 0) {
             console.log("❌ 第二步报价失败");
             return null;
         }
-        const amountC = parseInt(quote2.outAmount);
+
+        // 检查价格影响
+        if (quote2.priceImpactPct > ARBITRAGE_CONFIG.maxPriceImpact) {
+            console.log(`❌ 第二步价格影响过大: ${(quote2.priceImpactPct * 100).toFixed(2)}%，跳过此套利机会`);
+            return null;
+        }
+
+        const fee2 = (quote2.totalFeeAndDeposits || quote2.feeAmount || 0) + (quote2.platformFee || 0);
+        const amountC = parseInt(quote2.outAmount - fee2);
 
         // 第三步: C → A
+        console.log(`\n🔍 检查第三步流动性: ${getTokenName(tokenC)} → ${getTokenName(tokenA)}`);
+        const liquidityCheck3 = await checkEnhancedLiquidity(tokenC, tokenA, amountC);
+        if (!liquidityCheck3) {
+            console.log(`❌ 第三步流动性不足，跳过此套利机会`);
+            return null;
+        }
+
         const quote3 = await getQuote(tokenC, tokenA, amountC);
         if (!quote3 || !quote3.routePlan || quote3.routePlan.length === 0) {
             console.log("❌ 第三步报价失败");
             return null;
         }
-        const finalAmount = parseInt(quote3.outAmount);
 
-        // 计算利润
+        // 检查价格影响
+        if (quote3.priceImpactPct > ARBITRAGE_CONFIG.maxPriceImpact) {
+            console.log(`❌ 第三步价格影响过大: ${(quote3.priceImpactPct * 100).toFixed(2)}%，跳过此套利机会`);
+            return null;
+        }
+
+        const fee3 = (quote3.totalFeeAndDeposits || quote3.feeAmount || 0) + (quote3.platformFee || 0);
+        const finalAmount = parseInt(quote3.outAmount - fee3);
+
+        // 计算总手续费
+        const totalFees = fee1 + fee2 + fee3;
+
+        // 计算利润（使用实际输出金额）
         const profit = finalAmount - amount;
         const profitPercent = (profit / amount) * 100;
 
@@ -406,17 +659,26 @@ async function calculateTriangularArbitrage(tokenA, tokenB, tokenC, amount) {
         const balA1 = await getTokenBalance(wallet.publicKey, tokenA);
         const balB1 = await getTokenBalance(wallet.publicKey, tokenB);
         const balC1 = await getTokenBalance(wallet.publicKey, tokenC);
-        console.log(`结束余额: ${tokenA}: ${balA1}, ${tokenB}: ${balB1}, ${tokenC}: ${balC1}`);
+        console.log(`结束余额: ${getTokenName(tokenA)}: ${balA1}, ${getTokenName(tokenB)}: ${balB1}, ${getTokenName(tokenC)}: ${balC1}`);
+
+        // 详细分析
+        console.log(`\n📊 套利分析:`);
+        console.log(`  第一步: ${getTokenName(tokenA)} ${amount / 1e6} → ${getTokenName(tokenB)} ${amountB / 1e6} (手续费: ${fee1 / 1e6})`);
+        console.log(`  第二步: ${getTokenName(tokenB)} ${amountB / 1e6} → ${getTokenName(tokenC)} ${amountC / 1e6} (手续费: ${fee2 / 1e6})`);
+        console.log(`  第三步: ${getTokenName(tokenC)} ${amountC / 1e6} → ${getTokenName(tokenA)} ${finalAmount / 1e6} (手续费: ${fee3 / 1e6})`);
+        console.log(`  总手续费: ${totalFees / 1e6}`);
+        console.log(`  预期利润: ${profitPercent.toFixed(4)}%`);
+        console.log(`  考虑滑点后利润: ${actualProfitPercent.toFixed(4)}%`);
 
         if (actualProfitPercent >= RISK_CONFIG.minProfitAfterSlippage) {
-            console.log(`\n📊 满足阈值，套利结果:`);
+            console.log(`\n✅ 满足阈值，套利结果:`);
             console.log(`预期利润: ${profitPercent.toFixed(4)}%`);
             console.log(`考虑滑点后利润: ${actualProfitPercent.toFixed(4)}%`);
             console.log(`初始: ${amount / 1e6}`);
             console.log(`最终: ${finalAmount / 1e6}`);
             console.log(`利润: ${profit / 1e6} (${profitPercent.toFixed(4)}%)`);
         } else {
-            console.log(`未达阈值，仅模拟。预期利润: ${profitPercent.toFixed(4)}%, 考虑滑点后: ${actualProfitPercent.toFixed(4)}%`);
+            console.log(`❌ 未达阈值，仅模拟。预期利润: ${profitPercent.toFixed(4)}%, 考虑滑点后: ${actualProfitPercent.toFixed(4)}%`);
         }
 
         // 记录日志
@@ -431,6 +693,7 @@ async function calculateTriangularArbitrage(tokenA, tokenB, tokenC, amount) {
             tokenC,
             amountIn: amount,
             amountOut: finalAmount,
+            totalFees,
             balA0,
             balB0,
             balC0,
@@ -445,7 +708,8 @@ async function calculateTriangularArbitrage(tokenA, tokenB, tokenC, amount) {
             profitPercent,
             actualProfitPercent,
             quotes: [quote1, quote2, quote3],
-            path: [tokenA, tokenB, tokenC]
+            path: [tokenA, tokenB, tokenC],
+            totalFees
         };
     } catch (error) {
         console.error("计算三角套利时发生错误:", error);
