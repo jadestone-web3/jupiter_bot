@@ -1,14 +1,13 @@
 # Jupiter 三角套利机器人
 
 ## 项目目标
-- 实现Solana链上三角套利自动化，支持多币种、批量交易、Jito高优先级通道。
+- 实现Solana链上三角套利自动化，支持多币种、批量交易。
 - 集成自动归集、风险控制、滑点保护、日志监控等功能。
 - 适合主流币和新币套利，支持自定义套利路径。
 
 ## 原理说明
 - **三角套利**：依次执行A→B→C→A三步swap，捕捉DEX间价格差。
 - **批量交易**：三步swap合并为一笔Solana原子交易，全部成功或全部失败。
-- **Jito集成**：支持Jito RPC和tip机制，提升交易优先级，减少MEV抢跑。
 - **自动归集**：主币余额不足时自动将其他币种兑换为主币，防止资金碎片化。
 - **风险控制**：动态滑点、利润阈值、连续亏损/日亏损限制、成功率监控等。
 - **日志监控**：详细记录每次套利模拟与实盘结果，便于复盘和可视化。
@@ -24,7 +23,7 @@ npm install
 在项目根目录新建 `.env` 文件，内容示例：
 ```
 MNEMONIC=你的助记词（12或24个英文单词，空格分隔）
-RPC_LIST=https://rpc.jito.wtf/,https://rpc.helius.xyz/...,其他节点
+RPC_LIST=https://rpc.helius.xyz/...,其他节点
 ENABLE_REAL_TRADE=false   # true为实盘，false为只模拟
 ```
 
@@ -49,7 +48,6 @@ node arbitrage_v2.js
 
 ### 6. 常见问题
 - 助记词/私钥**绝不能**明文上传或泄露。
-- Jito RPC有速率限制，建议多节点轮询。
 - 主币余额不足时会自动归集，无需手动干预。
 - 推荐先用模拟模式（ENABLE_REAL_TRADE=false）测试。
 
@@ -60,6 +58,5 @@ node arbitrage_v2.js
 
 ## 参考资料
 - [Jupiter Aggregator](https://jup.ag/)
-- [Jito Network](https://docs.jito.network/)
 - [Solana Docs](https://docs.solana.com/)
 - [MEV on Solana](https://solanamev.com/)

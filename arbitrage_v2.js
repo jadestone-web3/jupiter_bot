@@ -1,4 +1,4 @@
-import { Connection, Keypair, PublicKey, Transaction, VersionedTransaction, SystemProgram } from "@solana/web3.js";
+import { Connection, Keypair, PublicKey, Transaction, VersionedTransaction } from "@solana/web3.js";
 import fetch from "node-fetch";
 import fs from "fs";
 import bs58 from "bs58";
@@ -307,15 +307,6 @@ async function executeBatchSwap(swapDataList) {
             const swapTransaction = Transaction.from(Buffer.from(swapData.swapTransaction, 'base64'));
             transaction.add(...swapTransaction.instructions);
         }
-
-        // 添加Jito tip指令
-        const JITO_TIP_ADDRESS = new PublicKey("Jito111111111111111111111111111111111111111");
-        const tipLamports = 10000; // 0.00001 SOL
-        transaction.add(SystemProgram.transfer({
-            fromPubkey: wallet.publicKey,
-            toPubkey: JITO_TIP_ADDRESS,
-            lamports: tipLamports
-        }));
 
         // 签名并发送
         transaction.sign(wallet);
