@@ -1,15 +1,27 @@
-async function testQuote() {
-    const inputMint = TOKENS.USDC;
-    const outputMint = TOKENS.SOL;
-    const amount = 1_000_000; // 1 USDC
+import { getQuote } from "../core/quote.js";
+import { TOKENS, getTokenName } from "../utils/tokens.js";
 
-    const url = `https://quote-api.jup.ag/v6/quote?inputMint=${inputMint}&outputMint=${outputMint}&amount=${amount}&slippageBps=30`;
-    const res = await fetch(url);
-    const data = await res.json();
+const testPairs = [
+    [TOKENS.USDC, TOKENS.SOL],
+    [TOKENS.USDC, TOKENS.BONK],
+    [TOKENS.USDC, TOKENS.JUP]
+];
 
-    console.log("【Jupiter报价测试】");
-    console.log(`USDC → SOL 1 USDC`);
-    console.log("返回数据：", data);
+const AMOUNT = 1_000_000; // 1 USDC
+
+async function main() {
+    console.log("🧪 Jupiter报价接口测试...");
+    for (const [tokenA, tokenB] of testPairs) {
+        try {
+            const quote = await getQuote(tokenA, tokenB, AMOUNT);
+            console.log(`\n${getTokenName(tokenA)} → ${getTokenName(tokenB)}`);
+            console.log("outAmount:", quote.outAmount / 1e6);
+            console.log("priceImpact:", (quote.priceImpactPct * 100).toFixed(4) + "%");
+            console.log("routePlan数:", quote.routePlan?.length || 0);
+        } catch (e) {
+            console.log(`\n${getTokenName(tokenA)} → ${getTokenName(tokenB)} 报价失败:`, e.message);
+        }
+    }
 }
 
-testQuote().catch(console.error); 
+main().catch(console.error); 
