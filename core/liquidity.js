@@ -15,9 +15,10 @@ export async function checkLiquidity(inputMint, outputMint, amount, maxPriceImpa
         if (quote.priceImpactPct > maxPriceImpact) {
             return { passed: false, reason: `价格影响过大(${(quote.priceImpactPct * 100).toFixed(2)}%)`, quote };
         }
-        if (quote.outAmount < amount * 0.95) {
-            return { passed: false, reason: "输出金额过低", quote };
-        }
+        // consider other method
+        // if (quote.outAmount < amount * 0.95) {
+        //     return { passed: false, reason: "输出金额过低", quote };
+        // }
         return { passed: true, quote };
     } catch (e) {
         return { passed: false, reason: e.message };
