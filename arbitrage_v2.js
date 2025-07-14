@@ -41,6 +41,10 @@ async function main() {
             // 3. 遍历套利路径
             for (const [tokenA, tokenB, tokenC] of ARBITRAGE_PAIRS) {
                 console.log(`\n【模拟三角套利】${getTokenName(tokenA)} → ${getTokenName(tokenB)} → ${getTokenName(tokenC)} → ${getTokenName(tokenA)}`);
+                // 记录报价开始时间和slot
+                const startTime = Date.now();
+                const startSlot = await connection.getSlot();
+
                 // 3.1 检查每一步流动性
                 const l1 = await checkLiquidity(tokenA, tokenB, AMOUNT, MAX_PRICE_IMPACT);
                 if (!l1.passed) { console.log("❌ 第一步流动性不足:", l1.reason); continue; }
@@ -54,13 +58,14 @@ async function main() {
                 // 3.3 满足条件则执行套利
                 if (profitPercent > MIN_PROFIT_PERCENT) {
                     if (ENABLE_REAL_TRADE) {
+                        
                         // 真实交易
                         try {
                             const sig = await executeBatchSwap([
                                 Buffer.from(l1.quote.swapTransaction, 'base64'),
                                 Buffer.from(l2.quote.swapTransaction, 'base64'),
                                 Buffer.from(l3.quote.swapTransaction, 'base64')
-                            ]);
+                            ],startTime,startSlot);
                             console.log("✅ 真实套利成功，交易哈希:", sig);
                             logArbitrage({ time: new Date().toISOString(), path: [tokenA, tokenB, tokenC], profit, profitPercent, sig });
                             updateSuccessRate(true, profit / 1e6);

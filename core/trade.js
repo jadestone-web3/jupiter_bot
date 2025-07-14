@@ -15,7 +15,7 @@ const blockEngineClient = new BlockEngineClient(blockEngineUrl);
  * @param {Array<Buffer>} swapTxs
  * @returns {Promise<string>} 交易哈希或模拟标识
  */
-export async function executeBatchSwap(swapTxs) {
+export async function executeBatchSwap(swapTxs, startTime, startSlot) {
     if (!ENABLE_REAL_TRADE) {
         return "SIMULATED_BATCH_SIGNATURE";
     }
@@ -37,6 +37,13 @@ export async function executeBatchSwap(swapTxs) {
         // 序列化交易
         const serializedTx = transaction.serialize().toString('base64');
 
+         // 检查耗时和slot
+         const now = Date.now();
+         const nowSlot = await connection.getSlot();
+         if ((now - startTime) > 300 || nowSlot !== startSlot) {
+             console.log(`⏱️ 超时或slot变化，取消本次套利: 耗时${now - startTime}ms, slot变化${startSlot}→${nowSlot}`);
+             throw new Error('slot超时');
+         }
         // 提交 Bundle 到 Jito
         const bundleId = await blockEngineClient.sendBundle([serializedTx]);
         console.log(`Bundle 已提交，Bundle ID: ${bundleId}`);
