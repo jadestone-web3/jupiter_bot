@@ -1,11 +1,11 @@
 import { wallet } from "./wallet.js";
-import { Connection, Transaction } from "@solana/web3.js";
+import { Connection, Transaction, ComputeBudgetProgram } from "@solana/web3.js";
 import { ENABLE_REAL_TRADE, RPC_LIST } from "../utils/config.js";
 import { getCurrentRpc, getConnection } from "../utils/rpc.js";
 
 
 const blockEngineUrl = "https://mainnet.block-engine.jito.network/api/v1/"; // Jito主网endpoint
-
+const JITO_TIP_ACCOUNT = new PublicKey("T1pyyaTNZsKv2WcRAB8oVnk93mLJw2XzjtVYqCsaHqt"); // Jito 提示账户
 // 支持批量swap，自动判断模拟/实盘，助记词钱包签名，自动广播和确认。
 
 /**
@@ -24,12 +24,24 @@ export async function executeBatchSwap(swapTxs, startTime, startSlot) {
         const transaction = new Transaction();
         transaction.recentBlockhash = blockhash;
         transaction.feePayer = wallet.publicKey;
-        transaction.add(ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 2000 }));
+        transaction.add(ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 5000 }));
 
         for (const swapTx of swapTxs) {
             const tx = Transaction.from(swapTx);
             transaction.add(...tx.instructions);
         }
+
+        // 添加提示费用
+        const tipAmount = 5000; // 0.01 SOL (10,000,000 lamports)
+        transaction.add(
+            SystemProgram.transfer({
+                fromPubkey: wallet.publicKey,
+                toPubkey: JITO_TIP_ACCOUNT,
+                lamports: tipAmount,
+            })
+        );
+
+
         transaction.sign(wallet);
 
         // jito
