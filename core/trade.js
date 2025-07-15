@@ -18,62 +18,43 @@ export async function executeBatchSwap(swapTxs, startTime, startSlot) {
         return "SIMULATED_BATCH_SIGNATURE";
     }
     try {
-        const connection = getConnection();
 
-        const { blockhash } = await connection.getLatestBlockhash();
-        const transaction = new Transaction();
-        transaction.recentBlockhash = blockhash;
-        transaction.feePayer = wallet.publicKey;
-        transaction.add(ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 5000 }));
-        // 调试和验证 swapTxs
-        console.log("swapTxs:", swapTxs);
         if (!Array.isArray(swapTxs) || swapTxs.length === 0) {
             throw new Error("swapTxs 无效或为空");
         }
-
         for (const swapTx of swapTxs) {
-            if (!(swapTx instanceof Buffer) || swapTx.length === 0) {
+            if (typeof swapTx !== 'string' || swapTx.length === 0) {
                 console.error("无效的 swapTx:", swapTx);
-                throw new Error("swapTx 不是有效的 Buffer");
+                throw new Error("swapTx 不是有效的 base64 字符串");
             }
-            const tx = VersionedTransaction.deserialize(swapTx);
-            if (!tx.instructions || tx.instructions.length === 0) {
-                console.warn("空指令集:", swapTx);
-                continue;
-            }
-            transaction.add(...tx.instructions);
         }
 
-        // 添加提示费用
-        const tipAmount = 5000; // 0.01 SOL (10,000,000 lamports)
-        transaction.add(
-            SystemProgram.transfer({
-                fromPubkey: wallet.publicKey,
-                toPubkey: JITO_TIP_ACCOUNT,
-                lamports: tipAmount,
-            })
-        );
-
-
-        transaction.sign(wallet);
-
-        // jito
-        // 序列化交易
-        const serializedTx = transaction.serialize().toString('base64');
-
         // 检查耗时和slot
+        const connection = getConnection();
         const now = Date.now();
         const nowSlot = await connection.getSlot();
         if ((now - startTime) > 300 || nowSlot !== startSlot) {
             console.log(`⏱️ 超时或slot变化，取消本次套利: 耗时${now - startTime}ms, slot变化${startSlot}→${nowSlot}`);
             throw new Error('slot超时');
         }
+
+        // 构造 tip 交易
+        const tipTx = new Transaction().add(
+            SystemProgram.transfer({
+                fromPubkey: wallet.publicKey,
+                toPubkey: JITO_TIP_ACCOUNT,
+                lamports: 5000, // 0.000005 SOL
+            })
+        );
+        tipTx.feePayer = wallet.publicKey;
+        tipTx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+        tipTx.sign(wallet);
+        const tipTxBase64 = tipTx.serialize().toString('base64');
+
+        const bundleTxs = [tipTxBase64, ...swapTxs];
+        // 直接打包发送给 Jito
         const body = {
-            jsonrpc: "2.0",
-            id: 1,
-            method: "sendBundle",
-            max_tip: 5000,
-            transactions: [serializedTx], // 这里是 base64 编码的交易
+            transactions: bundleTxs, // base64字符串数组
             // 其他参数可根据需要添加
         };
 
@@ -90,7 +71,7 @@ export async function executeBatchSwap(swapTxs, startTime, startSlot) {
         }
 
         const result = await response.json();
-        console.log(`request jito result = ${result}`);
+        console.log(`request jito result =`, result);
         return await pollBundleStatus(result.bundle_id);
     } catch (e) {
         throw new Error("批量swap执行失败: " + e.message);

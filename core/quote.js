@@ -29,6 +29,7 @@ export async function getSwapTransaction(quoteResponse, publicKey) {
                 userPublicKey: publicKey.toString(),
                 // auto wrap and unwrap SOL. default is true
                 wrapAndUnwrapSol: true,
+                computeUnitPriceMicroLamports: 5000,
                 // Optional, use if you want to charge a fee.  feeBps must have been passed in /quote API.
                 // feeAccount: "fee_account_public_key"
             })
