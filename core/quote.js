@@ -35,6 +35,6 @@ export async function getSwapTransaction(quoteResponse, publicKey) {
             })
         })
     ).json();
-    return Buffer.from(swapTransaction, 'base64');
+    return swapTransaction;
 }
 // get serialized transactions for the swap
