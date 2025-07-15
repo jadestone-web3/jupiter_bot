@@ -1,5 +1,5 @@
 import { wallet } from "./wallet.js";
-import { Connection, Transaction, ComputeBudgetProgram, PublicKey, VersionedTransaction } from "@solana/web3.js";
+import { SystemProgram, Transaction, ComputeBudgetProgram, PublicKey, VersionedTransaction } from "@solana/web3.js";
 import { ENABLE_REAL_TRADE, RPC_LIST } from "../utils/config.js";
 import { getCurrentRpc, getConnection } from "../utils/rpc.js";
 
