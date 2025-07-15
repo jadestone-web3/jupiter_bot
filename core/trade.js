@@ -1,7 +1,7 @@
 import { wallet } from "./wallet.js";
-import { SystemProgram, Transaction, ComputeBudgetProgram, PublicKey, VersionedTransaction } from "@solana/web3.js";
-import { ENABLE_REAL_TRADE, RPC_LIST } from "../utils/config.js";
-import { getCurrentRpc, getConnection } from "../utils/rpc.js";
+import { SystemProgram, Transaction, PublicKey } from "@solana/web3.js";
+import { ENABLE_REAL_TRADE } from "../utils/config.js";
+import { getConnection } from "../utils/rpc.js";
 
 
 const blockEngineUrl = "https://mainnet.block-engine.jito.network/api/v1/"; // Jito主网endpoint
@@ -63,7 +63,14 @@ export async function executeBatchSwap(swapTxs, startTime) {
         console.log(`request jito result =`, result);
         return await pollBundleStatus(result.bundle_id);
     } catch (e) {
-        throw new Error("批量swap执行失败: " + e.message);
+        console.error("❌ 批量swap执行失败，完整异常对象：", e);
+
+        if (e.response) {
+            const text = await e.response.text?.();
+            console.error("返回体：", text);
+        }
+
+        throw new Error("批量swap执行失败: " + (e.stack || e.message || e));
     }
 
     // 2. 轮询 Bundle 状态（HTTP GET）
