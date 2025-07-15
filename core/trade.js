@@ -2,7 +2,8 @@ import { wallet } from "./wallet.js";
 import { Connection, Transaction } from "@solana/web3.js";
 import { ENABLE_REAL_TRADE, RPC_LIST } from "../utils/config.js";
 import { getCurrentRpc } from "../utils/rpc.js";
-import { BlockEngineClient } from "jito-ts";
+import pkg from 'jito-ts';
+const { BlockEngineClient } = pkg;
 
 const blockEngineUrl = "https://mainnet.block-engine.jito.network/api/v1/"; // Jito主网endpoint
 const blockEngineClient = new BlockEngineClient(blockEngineUrl);
