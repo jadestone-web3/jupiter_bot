@@ -61,6 +61,13 @@ async function main() {
 
                         // 真实交易
                         try {
+                            console.log("l1.quote:", l1.quote);
+                            console.log("l2.quote:", l2.quote);
+                            console.log("l3.quote:", l3.quote);
+                            if (!l1.quote.swapTransaction || !l2.quote.swapTransaction || !l3.quote.swapTransaction) {
+                                console.log("❌ swapTransaction 字段缺失，无法执行真实套利");
+                                continue;
+                            }
                             const sig = await executeBatchSwap([
                                 Buffer.from(l1.quote.swapTransaction, 'base64'),
                                 Buffer.from(l2.quote.swapTransaction, 'base64'),
