@@ -2,7 +2,7 @@ import { wallet } from "./wallet.js";
 import { Connection, Transaction } from "@solana/web3.js";
 import { ENABLE_REAL_TRADE, RPC_LIST } from "../utils/config.js";
 import { getCurrentRpc } from "../utils/rpc.js";
-import { BlockEngineClient } from "@jito-foundation/jito-ts";
+import { BlockEngineClient } from "jito-ts";
 
 const blockEngineUrl = "https://mainnet.block-engine.jito.network/api/v1/"; // Jito主网endpoint
 const blockEngineClient = new BlockEngineClient(blockEngineUrl);
@@ -37,13 +37,13 @@ export async function executeBatchSwap(swapTxs, startTime, startSlot) {
         // 序列化交易
         const serializedTx = transaction.serialize().toString('base64');
 
-         // 检查耗时和slot
-         const now = Date.now();
-         const nowSlot = await connection.getSlot();
-         if ((now - startTime) > 300 || nowSlot !== startSlot) {
-             console.log(`⏱️ 超时或slot变化，取消本次套利: 耗时${now - startTime}ms, slot变化${startSlot}→${nowSlot}`);
-             throw new Error('slot超时');
-         }
+        // 检查耗时和slot
+        const now = Date.now();
+        const nowSlot = await connection.getSlot();
+        if ((now - startTime) > 300 || nowSlot !== startSlot) {
+            console.log(`⏱️ 超时或slot变化，取消本次套利: 耗时${now - startTime}ms, slot变化${startSlot}→${nowSlot}`);
+            throw new Error('slot超时');
+        }
         // 提交 Bundle 到 Jito
         const bundleId = await blockEngineClient.sendBundle([serializedTx]);
         console.log(`Bundle 已提交，Bundle ID: ${bundleId}`);
@@ -51,16 +51,16 @@ export async function executeBatchSwap(swapTxs, startTime, startSlot) {
         // 轮询 Bundle 状态以确认执行
         let bundleStatus = null;
         for (let i = 0; i < 10; i++) {
-        const statuses = await blockEngineClient.getBundleStatuses([bundleId]);
-        bundleStatus = statuses.value[0];
+            const statuses = await blockEngineClient.getBundleStatuses([bundleId]);
+            bundleStatus = statuses.value[0];
 
-        if (bundleStatus && bundleStatus.confirmation_status === 'confirmed') {
-            console.log(`Bundle 已确认，Signature: ${bundleStatus.transactions[0]}`);
-            return bundleStatus.transactions[0]; // 返回第一个交易的签名
-        }
+            if (bundleStatus && bundleStatus.confirmation_status === 'confirmed') {
+                console.log(`Bundle 已确认，Signature: ${bundleStatus.transactions[0]}`);
+                return bundleStatus.transactions[0]; // 返回第一个交易的签名
+            }
 
-        // 等待 1 秒后重试
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+            // 等待 1 秒后重试
+            await new Promise((resolve) => setTimeout(resolve, 1000));
         }
 
         throw new Error('Bundle 未在规定时间内确认');
