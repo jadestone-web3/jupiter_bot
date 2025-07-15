@@ -36,7 +36,7 @@ export async function executeBatchSwap(swapTxs, startTime, startSlot) {
                 console.error("无效的 swapTx:", swapTx);
                 throw new Error("swapTx 不是有效的 Buffer");
             }
-            const tx = Transaction.from(swapTx);
+            const tx = VersionedTransaction.deserialize(swapTx);
             if (!tx.instructions || tx.instructions.length === 0) {
                 console.warn("空指令集:", swapTx);
                 continue;
