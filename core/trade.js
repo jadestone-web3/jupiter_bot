@@ -22,7 +22,7 @@ export async function executeBatchSwap(swapTxs, startTime) {
         // 检查耗时和slot
         const connection = getConnection();
         const now = Date.now();
-        if ((now - startTime) > 350) {
+        if ((now - startTime) > 750) {
             console.log(`⏱️ 超时或slot变化，取消本次套利: 耗时${now - startTime}ms`);
             throw new Error('slot超时');
         }
