@@ -11,7 +11,6 @@ export const TOKENS = {
     KOKOK: "5HkhVG2bSb5PGjhX5QHm9urUquD7tx5eAau5Fonq78zc",
     PENGU: "2zMMhcVQEXDtdE6vsFS7S7D5oUodfJHE8vd1gnBouauv",
     Fartcoin: "9BB6NFEcjBCtnNLFko2FqVQBq8HHM13kCyYcdQbgpump",
-    DAI: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", // 示例，实际请替换
     FRAX: "FR3SPJmgfRSKKQ2ysUZBu7vJLpzTixXnjzb84bY3JifJ",
     RAY: "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
     SRM: "SRMuApVNdxXokk5GT7XD5cUUgXMBCoAz2LHeuAoKWRt",
