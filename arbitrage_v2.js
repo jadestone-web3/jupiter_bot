@@ -43,7 +43,6 @@ async function main() {
                 console.log(`\n【模拟三角套利】${getTokenName(tokenA)} → ${getTokenName(tokenB)} → ${getTokenName(tokenC)} → ${getTokenName(tokenA)}`);
                 // 记录报价开始时间和slot
                 const startTime = Date.now();
-                const startSlot = await getConnection().getSlot();
 
                 const quote1 = await getQuote(tokenA, tokenB, AMOUNT);
                 if (quote1.priceImpactPct > MAX_PRICE_IMPACT) {
@@ -77,7 +76,7 @@ async function main() {
                                 getSwapTransaction(quote2, wallet.publicKey),
                                 getSwapTransaction(quote3, wallet.publicKey),
                             ]);
-                            const sig = await executeBatchSwap(swapTxs, startTime, startSlot);
+                            const sig = await executeBatchSwap(swapTxs, startTime);
                             console.log("✅ 真实套利成功，交易哈希:", sig);
                             logArbitrage({ time: new Date().toISOString(), path: [tokenA, tokenB, tokenC], profit, profitPercent, sig });
                             updateSuccessRate(true, profit / 1e6);

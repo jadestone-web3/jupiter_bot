@@ -13,28 +13,17 @@ const JITO_TIP_ACCOUNT = new PublicKey("T1pyyaTNZsKv2WcRAB8oVnk93mLJw2XzjtVYqCsa
  * @param {Array<Buffer>} swapTxs
  * @returns {Promise<string>} 交易哈希或模拟标识
  */
-export async function executeBatchSwap(swapTxs, startTime, startSlot) {
+export async function executeBatchSwap(swapTxs, startTime) {
     if (!ENABLE_REAL_TRADE) {
         return "SIMULATED_BATCH_SIGNATURE";
     }
     try {
 
-        if (!Array.isArray(swapTxs) || swapTxs.length === 0) {
-            throw new Error("swapTxs 无效或为空");
-        }
-        for (const swapTx of swapTxs) {
-            if (typeof swapTx !== 'string' || swapTx.length === 0) {
-                console.error("无效的 swapTx:", swapTx);
-                throw new Error("swapTx 不是有效的 base64 字符串");
-            }
-        }
-
         // 检查耗时和slot
         const connection = getConnection();
         const now = Date.now();
-        const nowSlot = await connection.getSlot();
-        if ((now - startTime) > 300 || nowSlot !== startSlot) {
-            console.log(`⏱️ 超时或slot变化，取消本次套利: 耗时${now - startTime}ms, slot变化${startSlot}→${nowSlot}`);
+        if ((now - startTime) > 350) {
+            console.log(`⏱️ 超时或slot变化，取消本次套利: 耗时${now - startTime}ms`);
             throw new Error('slot超时');
         }
 
