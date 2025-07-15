@@ -60,6 +60,8 @@ async function main() {
                     continue;
                 }
 
+                console.log(`quote time = ${Date.now() - startTime}`);
+
                 // calculate profit
                 const profit = quote3.outAmount - AMOUNT;
                 const profitPercent = (profit / AMOUNT) * 100;
@@ -76,6 +78,7 @@ async function main() {
                                 getSwapTransaction(quote2, wallet.publicKey),
                                 getSwapTransaction(quote3, wallet.publicKey),
                             ]);
+                            console.log(`getSwapTransaction time = ${Date.now() - startTime}`);
                             const sig = await executeBatchSwap(swapTxs, startTime);
                             console.log("✅ 真实套利成功，交易哈希:", sig);
                             logArbitrage({ time: new Date().toISOString(), path: [tokenA, tokenB, tokenC], profit, profitPercent, sig });
