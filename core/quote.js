@@ -11,7 +11,11 @@ import fetch from "node-fetch";
 export async function getQuote(inputMint, outputMint, amount, slippageBps = 30) {
     const url = `https://quote-api.jup.ag/v6/quote?inputMint=${inputMint}&outputMint=${outputMint}&amount=${amount}&slippageBps=${slippageBps}`;
     const res = await fetch(url);
-    if (!res.ok) throw new Error("Quote fetch failed");
+    if (!res.ok) {
+        const errorText = await res.text();
+        console.error(`Quote fetch failed: status=${res.status}, url=${url}, response=${errorText}`);
+        throw new Error(`Quote fetch failed: status=${res.status}, response=${errorText}`);
+    }
     return await res.json();
 }
 
