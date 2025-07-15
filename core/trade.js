@@ -25,9 +25,22 @@ export async function executeBatchSwap(swapTxs, startTime, startSlot) {
         transaction.recentBlockhash = blockhash;
         transaction.feePayer = wallet.publicKey;
         transaction.add(ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 5000 }));
+        // 调试和验证 swapTxs
+        console.log("swapTxs:", swapTxs);
+        if (!Array.isArray(swapTxs) || swapTxs.length === 0) {
+            throw new Error("swapTxs 无效或为空");
+        }
 
         for (const swapTx of swapTxs) {
+            if (!(swapTx instanceof Buffer) || swapTx.length === 0) {
+                console.error("无效的 swapTx:", swapTx);
+                throw new Error("swapTx 不是有效的 Buffer");
+            }
             const tx = Transaction.from(swapTx);
+            if (!tx.instructions || tx.instructions.length === 0) {
+                console.warn("空指令集:", swapTx);
+                continue;
+            }
             transaction.add(...tx.instructions);
         }
 
@@ -56,6 +69,10 @@ export async function executeBatchSwap(swapTxs, startTime, startSlot) {
             throw new Error('slot超时');
         }
         const body = {
+            jsonrpc: "2.0",
+            id: 1,
+            method: "sendBundle",
+            max_tip: 5000,
             transactions: [serializedTx], // 这里是 base64 编码的交易
             // 其他参数可根据需要添加
         };
