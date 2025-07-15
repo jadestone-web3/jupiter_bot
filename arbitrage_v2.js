@@ -1,5 +1,5 @@
 import { TOKENS, getTokenName } from "./utils/tokens.js";
-import { getQuote } from "./core/quote.js";
+import { getQuote, getSwapTransaction } from "./core/quote.js";
 import { checkLiquidity } from "./core/liquidity.js";
 import { calcProfit } from "./core/profit.js";
 import { getTokenBalance } from "./core/balance.js";
@@ -45,33 +45,36 @@ async function main() {
                 const startTime = Date.now();
                 const startSlot = await getConnection().getSlot();
 
-                // 3.1 检查每一步流动性
-                const l1 = await checkLiquidity(tokenA, tokenB, AMOUNT, MAX_PRICE_IMPACT);
-                if (!l1.passed) { console.log("❌ 第一步流动性不足:", l1.reason); continue; }
-                const l2 = await checkLiquidity(tokenB, tokenC, l1.quote.outAmount, MAX_PRICE_IMPACT);
-                if (!l2.passed) { console.log("❌ 第二步流动性不足:", l2.reason); continue; }
-                const l3 = await checkLiquidity(tokenC, tokenA, l2.quote.outAmount, MAX_PRICE_IMPACT);
-                if (!l3.passed) { console.log("❌ 第三步流动性不足:", l3.reason); continue; }
-                // 3.2 计算利润
-                const { profit, profitPercent } = calcProfit(AMOUNT, l3.quote.outAmount);
+                const quote1 = await getQuote(tokenA, tokenB, AMOUNT);
+                if (quote1.priceImpactPct > MAX_PRICE_IMPACT) {
+                    console.log(`quote1 价格影响过大(${(quote1.priceImpactPct * 100).toFixed(2)}%)`);
+                    continue;
+                }
+                const quote2 = await getQuote(tokenB, tokenC, quote1.outAmount);
+                if (quote2.priceImpactPct > MAX_PRICE_IMPACT) {
+                    console.log(`quote2 价格影响过大(${(quote2.priceImpactPct * 100).toFixed(2)}%)`);
+                    continue;
+                }
+                const quote3 = await getQuote(tokenC, tokenA, quote2.outAmount);
+                if (quote3.priceImpactPct > MAX_PRICE_IMPACT) {
+                    console.log(`quote3 价格影响过大(${(quote3.priceImpactPct * 100).toFixed(2)}%)`);
+                    continue;
+                }
+
+                // calculate profit
+                const profit = quote3.outAmount - AMOUNT;
+                const profitPercent = (profit / AMOUNT) * 100;
+
                 console.log(`预期利润: ${profit / 1e6} (${profitPercent.toFixed(4)}%)`);
                 // 3.3 满足条件则执行套利
                 if (profitPercent > MIN_PROFIT_PERCENT) {
                     if (ENABLE_REAL_TRADE) {
-
                         // 真实交易
                         try {
-                            console.log("l1.quote:", l1.quote);
-                            console.log("l2.quote:", l2.quote);
-                            console.log("l3.quote:", l3.quote);
-                            if (!l1.quote.swapTransaction || !l2.quote.swapTransaction || !l3.quote.swapTransaction) {
-                                console.log("❌ swapTransaction 字段缺失，无法执行真实套利");
-                                continue;
-                            }
                             const sig = await executeBatchSwap([
-                                Buffer.from(l1.quote.swapTransaction, 'base64'),
-                                Buffer.from(l2.quote.swapTransaction, 'base64'),
-                                Buffer.from(l3.quote.swapTransaction, 'base64')
+                                getSwapTransaction(quote1, wallet.publicKey),
+                                getSwapTransaction(quote2, wallet.publicKey),
+                                getSwapTransaction(quote3, wallet.publicKey)
                             ], startTime, startSlot);
                             console.log("✅ 真实套利成功，交易哈希:", sig);
                             logArbitrage({ time: new Date().toISOString(), path: [tokenA, tokenB, tokenC], profit, profitPercent, sig });

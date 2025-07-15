@@ -1,7 +1,7 @@
 import { wallet } from "./wallet.js";
 import { Connection, Transaction } from "@solana/web3.js";
 import { ENABLE_REAL_TRADE, RPC_LIST } from "../utils/config.js";
-import { getCurrentRpc } from "../utils/rpc.js";
+import { getCurrentRpc, getConnection } from "../utils/rpc.js";
 
 
 const blockEngineUrl = "https://mainnet.block-engine.jito.network/api/v1/"; // Jito主网endpoint
@@ -18,7 +18,7 @@ export async function executeBatchSwap(swapTxs, startTime, startSlot) {
         return "SIMULATED_BATCH_SIGNATURE";
     }
     try {
-        const connection = new Connection(getCurrentRpc(), "confirmed");
+        const connection = getConnection();
 
         const { blockhash } = await connection.getLatestBlockhash();
         const transaction = new Transaction();
