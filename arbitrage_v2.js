@@ -71,11 +71,13 @@ async function main() {
                     if (ENABLE_REAL_TRADE) {
                         // 真实交易
                         try {
-                            const sig = await executeBatchSwap([
+                            // 解析所有 swap 交易
+                            const swapTxs = await Promise.all([
                                 getSwapTransaction(quote1, wallet.publicKey),
                                 getSwapTransaction(quote2, wallet.publicKey),
-                                getSwapTransaction(quote3, wallet.publicKey)
-                            ], startTime, startSlot);
+                                getSwapTransaction(quote3, wallet.publicKey),
+                            ]);
+                            const sig = await executeBatchSwap(swapTxs, startTime, startSlot);
                             console.log("✅ 真实套利成功，交易哈希:", sig);
                             logArbitrage({ time: new Date().toISOString(), path: [tokenA, tokenB, tokenC], profit, profitPercent, sig });
                             updateSuccessRate(true, profit / 1e6);
