@@ -4,7 +4,7 @@ import { ENABLE_REAL_TRADE } from "../utils/config.js";
 import { getConnection } from "../utils/rpc.js";
 
 
-const blockEngineUrl = "https://mainnet.block-engine.jito.network/api/v1/"; // Jito主网endpoint
+const blockEngineUrl = "https://mainnet.block-engine.jito.wtf/api/v1/"; // Jito主网endpoint
 const JITO_TIP_ACCOUNT = new PublicKey("T1pyyaTNZsKv2WcRAB8oVnk93mLJw2XzjtVYqCsaHqt"); // Jito 提示账户
 // 支持批量swap，自动判断模拟/实盘，助记词钱包签名，自动广播和确认。
 
@@ -75,7 +75,7 @@ export async function executeBatchSwap(swapTxs, startTime) {
 
     // 2. 轮询 Bundle 状态（HTTP GET）
     async function pollBundleStatus(bundleId) {
-        const statusUrl = `https://mainnet.block-engine.jito.network/api/v1/bundles/${bundleId}`;
+        const statusUrl = `https://mainnet.block-engine.jito.wtf/api/v1/bundles/${bundleId}`;
         let bundleStatus = null;
 
         for (let i = 0; i < 10; i++) {
