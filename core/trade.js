@@ -41,10 +41,14 @@ export async function executeBatchSwap(swapTxs, startTime) {
         const tipTxBase64 = tipTx.serialize().toString('base64');
 
         const bundleTxs = [tipTxBase64, ...swapTxs];
-        // 直接打包发送给 Jito
+        // 直接打包发送给 Jito，使用 JSON-RPC 格式
         const body = {
-            transactions: bundleTxs, // base64字符串数组
-            // 其他参数可根据需要添加
+            jsonrpc: "2.0",
+            id: 1,
+            method: "sendBundle",
+            params: {
+                transactions: bundleTxs // base64字符串数组
+            }
         };
 
         const response = await fetch(blockEngineUrl, {
