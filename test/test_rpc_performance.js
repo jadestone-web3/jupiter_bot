@@ -6,7 +6,11 @@ const connection = getConnection();
 async function testSlot(times) {
     const start = Date.now();
     for (let i = 0; i < times; i++) {
-        await connection.getSlot();
+        try {
+            await connection.getSlot();
+        } catch (e) {
+            console.error(`getSlot 第${i + 1}次出错:`, e.message);
+        }
     }
     const end = Date.now();
     console.log(`getSlot ${times} 次总耗时: ${end - start} ms`);
@@ -15,7 +19,12 @@ async function testSlot(times) {
 async function testBlockhash(times) {
     const start = Date.now();
     for (let i = 0; i < times; i++) {
-        await connection.getLatestBlockhash();
+        try {
+
+            await connection.getLatestBlockhash();
+        } catch (e) {
+            console.error(`getLatestBlockhash 第${i + 1}次出错:`, e.message);
+        }
     }
     const end = Date.now();
     console.log(`getLatestBlockhash ${times} 次总耗时: ${end - start} ms`);
