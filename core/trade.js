@@ -64,17 +64,27 @@ export async function executeBatchSwap(swapTxs, startTime) {
         }
 
         const result = await response.json();
-        console.log(`request jito result =`, result);
         return await pollBundleStatus(result.bundle_id);
     } catch (e) {
-        console.error("❌ 批量swap执行失败，完整异常对象：", e);
+        console.info(" jito 提交失败，降级成普通交易！");
 
-        if (e.response) {
-            const text = await e.response.text?.();
-            console.error("返回体：", text);
+        // fallback: 直接广播swapTxs
+        try {
+            const connection = getConnection();
+            const signatures = [];
+            for (const txBase64 of swapTxs) {
+                const txBuffer = Buffer.from(txBase64, 'base64');
+                const sig = await connection.sendRawTransaction(txBuffer, { skipPreflight: false });
+                signatures.push(sig);
+            }
+            if (signatures.length === 1) {
+                return signatures[0];
+            }
+            return signatures;
+        } catch (fallbackErr) {
+            console.error("❌ fallback 普通广播也失败：", fallbackErr);
+            throw new Error("批量swap执行失败（Jito和普通广播均失败）: " + (fallbackErr.stack || fallbackErr.message || fallbackErr));
         }
-
-        throw new Error("批量swap执行失败: " + (e.stack || e.message || e));
     }
 
     // 2. 轮询 Bundle 状态（HTTP GET）
